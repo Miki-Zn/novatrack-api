@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.core.config import settings
-from app.api.v1 import users
+from app.api.v1 import users, auth
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -10,6 +10,7 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
 
 @app.get("/health", tags=["health"])
