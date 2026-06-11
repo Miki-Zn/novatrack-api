@@ -1,7 +1,7 @@
 import uuid
 from enum import Enum
 from sqlalchemy import String, Boolean, Enum as SQLEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.models.base import Base
 
@@ -18,3 +18,4 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole), default=UserRole.MEMBER, nullable=False)
+    projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
