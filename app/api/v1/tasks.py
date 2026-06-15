@@ -3,9 +3,12 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db, get_current_active_user
+from app.models.task import TaskStatus
 from app.models.user import User
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.services.task_service import TaskService
+
+from typing import Optional
 
 router = APIRouter()
 
@@ -21,11 +24,21 @@ def create_task(
 @router.get("/project/{project_id}", response_model=list[TaskResponse])
 def read_project_tasks(
     project_id: uuid.UUID,
+    status: Optional[TaskStatus] = None,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     task_service = TaskService(db)
-    return task_service.get_tasks_by_project(project_id=project_id, current_user_id=current_user.id)
+    return task_service.get_tasks_by_project(
+        project_id=project_id, 
+        current_user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        status=status
+    )
+
 
 @router.patch("/{task_id}", response_model=TaskResponse)
 def update_task(

@@ -19,10 +19,21 @@ class TaskService:
         self.db.refresh(db_task)
         return db_task
 
-    def get_tasks_by_project(self, project_id: uuid.UUID, current_user_id: uuid.UUID) -> list[Task]:
+    def get_tasks_by_project(
+        self, 
+        project_id: uuid.UUID, 
+        current_user_id: uuid.UUID,
+        skip: int = 0,
+        limit: int = 100,
+        status: str | None = None
+    ) -> list[Task]:
+        
         self.project_service.get_project_by_id(project_id, current_user_id)
         
-        return self.db.query(Task).filter(Task.project_id == project_id).all()
+        query = self.db.query(Task).filter(Task.project_id == project_id)
+        if status:
+            query = query.filter(Task.status == status)
+        return query.offset(skip).limit(limit).all()
     
     def get_task_by_id(self, task_id: uuid.UUID, current_user_id: uuid.UUID) -> Task:
         task = self.db.query(Task).filter(Task.id == task_id).first()
