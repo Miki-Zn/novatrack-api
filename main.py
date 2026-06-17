@@ -1,14 +1,33 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from app.core.config import settings
 from app.api.v1 import users, auth, projects, tasks
+from app.core.scheduler import daily_maintenance_script
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = AsyncIOScheduler()
+    
+    scheduler.add_job(daily_maintenance_script, trigger='cron', hour=0, minute=0)
+    
+    scheduler.start()
+    print("⏰ Background scheduler started")
+    
+    yield
+    
+    scheduler.shutdown()
+    print("🛑 Background scheduler stopped")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/api/docs",
-    redoc_url="/api/redoc"
+    redoc_url="/api/redoc",
+    lifespan=lifespan
 )
 
 origins = [
@@ -25,12 +44,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
 app.include_router(projects.router, prefix=f"{settings.API_V1_STR}/projects", tags=["projects"])
 app.include_router(tasks.router, prefix=f"{settings.API_V1_STR}/tasks", tags=["tasks"])
-
 
 @app.get("/health", tags=["health"])
 async def health_check():
