@@ -21,5 +21,6 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: uuid.UUID
+    avatar_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
