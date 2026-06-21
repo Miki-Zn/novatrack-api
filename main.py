@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.core.config import settings
-from app.api.v1 import users, auth, projects, tasks
+from app.api.v1 import users, auth, projects, tasks, statistics
 from app.core.scheduler import daily_maintenance_script
 
 @asynccontextmanager
@@ -49,6 +49,7 @@ app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["aut
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
 app.include_router(projects.router, prefix=f"{settings.API_V1_STR}/projects", tags=["projects"])
 app.include_router(tasks.router, prefix=f"{settings.API_V1_STR}/tasks", tags=["tasks"])
+app.include_router(statistics.router, prefix=f"{settings.API_V1_STR}/statistics", tags=["statistics"])
 
 @app.get("/health", tags=["health"])
 async def health_check():

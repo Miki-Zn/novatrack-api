@@ -9,6 +9,9 @@ from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.services.task_service import TaskService
 
 from typing import Optional
+import csv
+import io
+from fastapi.responses import StreamingResponse
 
 router = APIRouter()
 
@@ -58,3 +61,28 @@ def delete_task(
 ):
     task_service = TaskService(db)
     task_service.delete_task(task_id, current_user.id)
+
+@router.get("/project/{project_id}/export/csv")
+def export_project_tasks_csv(
+    project_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    task_service = TaskService(db)
+    tasks = task_service.get_tasks_by_project(project_id, current_user.id, skip=0, limit=1000)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(["ID", "Title", "Description", "Status"])
+    
+    for task in tasks:
+        writer.writerow([str(task.id), task.title, task.description or "", task.status.value])
+        
+    output.seek(0)
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=project_{project_id}_tasks.csv"}
+    )
