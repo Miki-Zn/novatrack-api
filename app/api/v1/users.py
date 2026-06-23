@@ -1,12 +1,13 @@
 import os
 import uuid
 import shutil
-from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi import APIRouter, Depends, status, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, get_current_active_user, RoleChecker
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user_service import UserService
+from app.services.email_service import send_welcome_email
 
 router = APIRouter()
 
@@ -15,10 +16,16 @@ allow_admin = RoleChecker([UserRole.ADMIN])
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(
     user_in: UserCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     user_service = UserService(db)
-    return user_service.create_user(user_in)
+    new_user = user_service.create_user(user_in)
+    
+    user_name = new_user.full_name or "New User"
+    background_tasks.add_task(send_welcome_email, email_to=new_user.email, name=user_name)
+    
+    return new_user
 
 @router.get("/me", response_model=UserResponse)
 def read_user_me(
