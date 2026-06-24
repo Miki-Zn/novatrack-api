@@ -3,10 +3,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.api.v1 import users, auth, projects, tasks, statistics, ws
 from app.core.scheduler import daily_maintenance_script
+from app.core.rate_limit import limiter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,6 +29,9 @@ app = FastAPI(
     redoc_url="/api/redoc",
     lifespan=lifespan
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 origins = [
     "http://localhost:3000",
