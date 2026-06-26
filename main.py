@@ -1,15 +1,19 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.api.v1 import users, auth, projects, tasks, statistics, ws
 from app.core.scheduler import daily_maintenance_script
 from app.core.rate_limit import limiter
+from app.core.cache import redis_client
+from app.api.dependencies import get_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,5 +63,25 @@ app.include_router(statistics.router, prefix=f"{settings.API_V1_STR}/statistics"
 app.include_router(ws.router, prefix=f"{settings.API_V1_STR}/ws", tags=["websockets"])
 
 @app.get("/health", tags=["health"])
-async def health_check():
-    return {"status": "ok", "version": settings.VERSION}
+async def health_check(db: Session = Depends(get_db)):
+    db_status = "ok"
+    redis_status = "ok"
+
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        db_status = "failed"
+
+    try:
+        redis_client.ping()
+    except Exception:
+        redis_status = "failed"
+
+    system_status = "ok" if db_status == "ok" and redis_status == "ok" else "degraded"
+
+    return {
+        "status": system_status,
+        "version": settings.VERSION,
+        "database": db_status,
+        "redis": redis_status
+    }

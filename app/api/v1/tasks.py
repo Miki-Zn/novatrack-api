@@ -28,6 +28,7 @@ def create_task(
 def read_project_tasks(
     project_id: uuid.UUID,
     status: Optional[TaskStatus] = None,
+    search_query: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -39,9 +40,9 @@ def read_project_tasks(
         current_user_id=current_user.id,
         skip=skip,
         limit=limit,
-        status=status
+        status=status,
+        search_query=search_query
     )
-
 
 @router.patch("/{task_id}", response_model=TaskResponse)
 def update_task(
