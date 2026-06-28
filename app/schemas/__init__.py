@@ -3,3 +3,4 @@ from app.schemas.token import Token, TokenPayload
 from app.schemas.project import ProjectBase, ProjectCreate, ProjectUpdate, ProjectResponse
 from app.schemas.task import TaskBase, TaskCreate, TaskUpdate, TaskResponse
 from app.schemas.statistics import DashboardStats, TaskStatusCounts
+from app.schemas.project_member import ProjectMemberCreate, ProjectMemberResponse
