@@ -1,5 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+STRIPE_API_KEY: str = "sk_test_51"
+STRIPE_WEBHOOK_SECRET: str = "whse12345"
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "NovaTrack API"
     VERSION: str = "1.0.0"

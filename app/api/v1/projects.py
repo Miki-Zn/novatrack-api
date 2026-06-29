@@ -6,6 +6,9 @@ from app.api.dependencies import get_db, get_current_active_user
 from app.models.user import User
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.services.project_service import ProjectService
+from fastapi.responses import Response
+from app.services.pdf_service import PDFReportService
+from app.services.task_service import TaskService
 
 router = APIRouter()
 
@@ -28,11 +31,23 @@ def read_projects(
     project_service = ProjectService(db)
     return project_service.get_user_projects(owner_id=current_user.id, skip=skip, limit=limit)
 
-@router.get("/{project_id}", response_model=ProjectResponse)
-def read_project(
+@router.get("/{project_id}/report/pdf")
+def download_project_report(
     project_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     project_service = ProjectService(db)
-    return project_service.get_project_by_id(project_id=project_id, owner_id=current_user.id)
+    task_service = TaskService(db)
+    
+    project = project_service.get_project_by_id(project_id, current_user.id)
+    tasks = task_service.get_tasks_by_project(project_id, current_user.id, skip=0, limit=1000)
+    
+    pdf_service = PDFReportService()
+    pdf_bytes = pdf_service.generate_project_report(project, tasks)
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=project_{project_id}.pdf"}
+    )
