@@ -4,3 +4,4 @@ from app.schemas.project import ProjectBase, ProjectCreate, ProjectUpdate, Proje
 from app.schemas.task import TaskBase, TaskCreate, TaskUpdate, TaskResponse
 from app.schemas.statistics import DashboardStats, TaskStatusCounts
 from app.schemas.project_member import ProjectMemberCreate, ProjectMemberResponse
+from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest

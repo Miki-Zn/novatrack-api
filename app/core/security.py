@@ -21,3 +21,19 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
     return encoded_jwt
+
+def create_password_reset_token(email: str) -> str:
+    expires_delta = timedelta(minutes=15)
+    expire = datetime.utcnow() + expires_delta
+    to_encode = {"exp": expire, "sub": email, "type": "reset"}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def verify_password_reset_token(token: str) -> str | None:
+    try:
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        if decoded_token.get("type") != "reset":
+            return None
+        return decoded_token.get("sub")
+    except jwt.PyJWTError:
+        return None
