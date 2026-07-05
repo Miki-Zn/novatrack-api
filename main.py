@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.api.v1 import users, auth, projects, tasks, statistics, ws, members, payments
+from app.api.v1 import users, auth, projects, tasks, statistics, ws, members, payments, jobs
 from app.core.scheduler import daily_maintenance_script
 from app.core.rate_limit import limiter
 from app.core.cache import redis_client
@@ -63,6 +63,7 @@ app.include_router(statistics.router, prefix=f"{settings.API_V1_STR}/statistics"
 app.include_router(ws.router, prefix=f"{settings.API_V1_STR}/ws", tags=["websockets"])
 app.include_router(members.router, prefix=f"{settings.API_V1_STR}/members", tags=["members"])
 app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
+app.include_router(jobs.router, prefix=f"{settings.API_V1_STR}/jobs", tags=["jobs"])
 
 @app.get("/health", tags=["health"])
 async def health_check(db: Session = Depends(get_db)):

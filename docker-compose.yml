@@ -11,6 +11,16 @@ services:
     env_file:
       - .env
 
+  worker:
+    build: .
+    command: celery -A app.core.celery_app worker --loglevel=info
+    depends_on:
+      - db
+      - redis
+      - api
+    env_file:
+      - .env
+
   db:
     image: postgres:15-alpine
     environment:
