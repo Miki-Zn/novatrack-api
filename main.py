@@ -14,6 +14,11 @@ from app.core.scheduler import daily_maintenance_script
 from app.core.rate_limit import limiter
 from app.core.cache import redis_client
 from app.api.dependencies import get_db
+from app.api.v2 import tasks as v2_tasks
+
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +29,16 @@ async def lifespan(app: FastAPI):
     yield
     scheduler.shutdown()
     print("🛑 Background scheduler stopped")
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[
+            FastApiIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=1.0,
+    )
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -64,6 +79,8 @@ app.include_router(ws.router, prefix=f"{settings.API_V1_STR}/ws", tags=["websock
 app.include_router(members.router, prefix=f"{settings.API_V1_STR}/members", tags=["members"])
 app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
 app.include_router(jobs.router, prefix=f"{settings.API_V1_STR}/jobs", tags=["jobs"])
+app.include_router(v2_tasks.router, prefix="/api/v2/tasks", tags=["tasks_v2"])
+
 
 @app.get("/health", tags=["health"])
 async def health_check(db: Session = Depends(get_db)):
